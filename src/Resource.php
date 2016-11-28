@@ -3,8 +3,7 @@ namespace Salesforce;
 
 use GuzzleHttp\Client as HttpClient;
 
-abstract class Resource
-{
+abstract class Resource {
 	protected static $booted = [];
 
 	/**
@@ -81,7 +80,7 @@ abstract class Resource
 
 	/**
 	 * Get the metadata for the current class resource
-	 * 
+	 *
 	 * @return Salesforce\Metadata
 	 */
 	public static function getMetadata() {
@@ -90,29 +89,26 @@ abstract class Resource
 
 	/**
 	 * Lookup a specific resource
-	 * 
+	 *
 	 * @param  string $id
 	 * @return Salesforce\Resource|null
 	 */
 	public static function find($id) {
-
 		$resourceName = (new \ReflectionClass(get_called_class()))->getShortName();
 		$metadata = @json_decode(self::$client->get(self::$baseUri . $resourceName . "/{$id}")->getBody());
 
 		return new static($metadata);
-
 	}
 
 	/**
-     * Set the client instance.
-     *
-     * @param  \GuzzleHttp\Client $client
-     * @return void
-     */
-    public static function setHttpClient(HttpClient $client)
-    {
-        static::$client = $client;
-    }
+	 * Set the client instance.
+	 *
+	 * @param  \GuzzleHttp\Client $client
+	 * @return void
+	 */
+	public static function setHttpClient(HttpClient $client) {
+		static::$client = $client;
+	}
 
 	/**
 	 * Get an attribute from the container.
@@ -168,10 +164,9 @@ abstract class Resource
 	 */
 	public function __call($method, $parameters) {
 
-		if(substr($method, 0, 3) == 'set') {
+		if (substr($method, 0, 3) == 'set') {
 			return $this->{substr($method, 3)} = current($parameters);
-		}
-		else if(substr($method, 0, 3) == 'get') {
+		} else if (substr($method, 0, 3) == 'get') {
 			return $this->get(substr($method, 3), current($parameters));
 		}
 

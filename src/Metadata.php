@@ -1,7 +1,7 @@
 <?php
 namespace Salesforce;
 
-class Metadata 
+class Metadata
 {
     /**
      * Original source of metadata
@@ -51,7 +51,7 @@ class Metadata
             $field = (object) [
                 'name' => $rawField->name,
                 'label' => $rawField->label,
-                'nullable' => $rawField->nillable,
+                'required' => !$rawField->nillable, // Required if field is not nillable
                 'type' => $rawField->type,
                 'default' => $rawField->defaultValue,
             ];
