@@ -3,7 +3,7 @@ namespace Salesforce\Resource;
 
 use Salesforce\Resource;
 
-class Account extends Resource 
+class Account extends Resource
 {
 
 }

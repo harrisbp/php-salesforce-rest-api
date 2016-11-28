@@ -1,7 +1,10 @@
 <?php
 namespace Salesforce;
 
-abstract class Resource implements ArrayAccess {
+use GuzzleHttp\Client as HttpClient;
+
+abstract class Resource
+{
 	protected static $booted = [];
 
 	/**
@@ -47,7 +50,7 @@ abstract class Resource implements ArrayAccess {
 		$this->bootIfNotBooted();
 
 		foreach ($attributes as $key => $value) {
-			$this->attributes[$key] = $value;
+			$this->set($key, $value);
 		}
 
 		$this->original = $this->attributes;
@@ -67,23 +70,49 @@ abstract class Resource implements ArrayAccess {
 
 	protected static function boot() {
 		$resourceName = (new \ReflectionClass(get_called_class()))->getShortName();
-		$metadata = @json_decode(self::$client->get(self::$baseUri . $resourceName)->getBody());
+		$metadata = @json_decode(self::$client->get(self::$baseUri . $resourceName . "/describe")->getBody());
 
 		if (!$metadata) {
 			throw new Exception('Unable to decode metadata for resource: ' . $resourceName);
 		}
 
-		self::$metadata[static::class] = $metadata;
-
-		if (count($metadata->fields)) {
-			$attributes = [];
-			foreach ($metadata->fields as $field) {
-				$attributes[$field['name']] = [
-
-				];
-			}
-		}
+		self::$metadata[static::class] = new Metadata($metadata);
 	}
+
+	/**
+	 * Get the metadata for the current class resource
+	 * 
+	 * @return Salesforce\Metadata
+	 */
+	public static function getMetadata() {
+		return self::$metadata[static::class];
+	}
+
+	/**
+	 * Lookup a specific resource
+	 * 
+	 * @param  string $id
+	 * @return Salesforce\Resource|null
+	 */
+	public static function find($id) {
+
+		$resourceName = (new \ReflectionClass(get_called_class()))->getShortName();
+		$metadata = @json_decode(self::$client->get(self::$baseUri . $resourceName . "/{$id}")->getBody());
+
+		return new static($metadata);
+
+	}
+
+	/**
+     * Set the client instance.
+     *
+     * @param  \GuzzleHttp\Client $client
+     * @return void
+     */
+    public static function setHttpClient(HttpClient $client)
+    {
+        static::$client = $client;
+    }
 
 	/**
 	 * Get an attribute from the container.
@@ -97,7 +126,19 @@ abstract class Resource implements ArrayAccess {
 			return $this->attributes[$key];
 		}
 
-		return value($default);
+		return $default instanceof Closure ? $default() : $default;
+	}
+
+	/**
+	 * Set an attribute from the container.
+	 *
+	 * @param  string  $key
+	 * @param  mixed   $value
+	 * @return mixed
+	 */
+	public function set($key, $value) {
+		$this->attributes[$key] = $value;
+		return $this;
 	}
 
 	/**
@@ -119,66 +160,6 @@ abstract class Resource implements ArrayAccess {
 	}
 
 	/**
-	 * Convert the object into something JSON serializable.
-	 *
-	 * @return array
-	 */
-	public function jsonSerialize() {
-		return $this->toArray();
-	}
-
-	/**
-	 * Convert the Fluent instance to JSON.
-	 *
-	 * @param  int  $options
-	 * @return string
-	 */
-	public function toJson($options = 0) {
-		return json_encode($this->jsonSerialize(), $options);
-	}
-
-	/**
-	 * Determine if the given offset exists.
-	 *
-	 * @param  string  $offset
-	 * @return bool
-	 */
-	public function offsetExists($offset) {
-		return isset($this->{$offset});
-	}
-
-	/**
-	 * Get the value for a given offset.
-	 *
-	 * @param  string  $offset
-	 * @return mixed
-	 */
-	public function offsetGet($offset) {
-		return $this->{$offset};
-	}
-
-	/**
-	 * Set the value at the given offset.
-	 *
-	 * @param  string  $offset
-	 * @param  mixed   $value
-	 * @return void
-	 */
-	public function offsetSet($offset, $value) {
-		$this->{$offset} = $value;
-	}
-
-	/**
-	 * Unset the value at the given offset.
-	 *
-	 * @param  string  $offset
-	 * @return void
-	 */
-	public function offsetUnset($offset) {
-		unset($this->{$offset});
-	}
-
-	/**
 	 * Handle dynamic calls to the container to set attributes.
 	 *
 	 * @param  string  $method
@@ -186,9 +167,15 @@ abstract class Resource implements ArrayAccess {
 	 * @return $this
 	 */
 	public function __call($method, $parameters) {
-		$this->attributes[$method] = count($parameters) > 0 ? $parameters[0] : true;
 
-		return $this;
+		if(substr($method, 0, 3) == 'set') {
+			return $this->{substr($method, 3)} = current($parameters);
+		}
+		else if(substr($method, 0, 3) == 'get') {
+			return $this->get(substr($method, 3), current($parameters));
+		}
+
+		throw new Exception('Called unknown method: ' . $method);
 	}
 
 	/**
@@ -209,7 +196,7 @@ abstract class Resource implements ArrayAccess {
 	 * @return void
 	 */
 	public function __set($key, $value) {
-		$this->attributes[$key] = $value;
+		return $this->set($key, $value);
 	}
 
 	/**

@@ -5,5 +5,5 @@ use Salesforce\Resource;
 
 class Lead extends Resource 
 {
-    
+
 }
