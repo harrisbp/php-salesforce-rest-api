@@ -33,11 +33,10 @@ class Metadata
     const REFERENCE_TYPE = 'reference';
 
     public function __construct($metadata) {
-
         $this->_source = $metadata;
         $this->parseFields($metadata->fields);
-
     }
+
 
     /**
      * Parse metadata for fields
@@ -54,6 +53,8 @@ class Metadata
                 'required' => !$rawField->nillable, // Required if field is not nillable
                 'type' => $rawField->type,
                 'default' => $rawField->defaultValue,
+                'canCreate' => $rawField->createable,
+                'canUpdate' => $rawField->updateable,
             ];
 
             switch($rawField->type) {
@@ -95,9 +96,35 @@ class Metadata
                     break;
             }
 
-            $key = mb_strtolower($rawField->name, 'UTF-8');
-            $this->fields[$key] = $field;
+            Resource::processKey($rawField->name);
+
+            $this->fields[$rawField->name] = $field;
         }
+
+        //print_r($this->fields);
+    }
+
+    /**
+     * Returns the field
+     * @param  string $fieldName
+     * @return string|null
+     */
+    public function getField($fieldName) {
+        Resource::processKey($fieldName);
+
+        if ($this->hasField($fieldName)) {
+            return $this->fields[$fieldName];
+        }
+
+        return null;
+    }
+
+    /**
+     * Return the fields array
+     * @return array
+     */
+    public function getAllFields() {
+        return $this->fields;
     }
 
     /**
@@ -118,4 +145,41 @@ class Metadata
         return true;
     }
 
+    public function getSampleValue($field) {
+        switch ($field->type) {
+        case self::INTEGER_TYPE:
+        case self::DOUBLE_TYPE:
+        case self::DOUBLE_TYPE:
+        case self::CURRENCY_TYPE:
+            $value = 1;
+            break;
+        case self::BOOLEAN_TYPE:
+            $value = false;
+            break;
+        case self::STRING_TYPE:
+        case self::TEXTAREA_TYPE:
+            $value = 'Test Value';
+            break;
+        case self::DATE_TYPE:
+            $value = date('Y-m-d');
+            break;
+        case self::DATETIME_TYPE:
+            $value = date('Y-m-d H:i:s');
+            break;
+        case self::URL_TYPE:
+            $value = 'https://example.org/';
+            break;
+        case self::PHONE_TYPE:
+            $value = '555-555-5555';
+            break;
+        case self::PICKLIST_TYPE:
+            $value = $this->fields[Resource::processKey($field->name)]->values[0]['value'];
+            break;
+        default:
+            $value = 1;
+            break;
+        }
+
+        return $value;
+    }
 }

@@ -68,14 +68,13 @@ abstract class Resource {
 	}
 
 	protected static function boot() {
-		$resourceName = (new \ReflectionClass(get_called_class()))->getShortName();
-		$metadata = @json_decode(self::$client->get(self::$baseUri . $resourceName . "/describe")->getBody());
+		$metadata = @json_decode(static::$client->get(static::getBaseUrl() . "describe")->getBody());
 
 		if (!$metadata) {
 			throw new Exception('Unable to decode metadata for resource: ' . $resourceName);
 		}
 
-		self::$metadata[static::class] = new Metadata($metadata);
+		static::$metadata[static::class] = new Metadata($metadata);
 	}
 
 	/**
@@ -84,7 +83,28 @@ abstract class Resource {
 	 * @return Salesforce\Metadata
 	 */
 	public static function getMetadata() {
-		return self::$metadata[static::class];
+		return static::$metadata[static::class];
+	}
+
+	protected function getResourceName() {
+		return (new \ReflectionClass(get_called_class()))->getShortName();
+	}
+
+	/**
+	 * getResourceUrl
+	 * @param  int $id
+	 * @return string
+	 */
+	public function getResourceUrl($id) {
+		return static::$baseUri . static::getResourceName() . "/{$id}";
+	}
+
+	/**
+	 * getBaseUrl
+	 * @return string
+	 */
+	public function getBaseUrl() {
+		return static::$baseUri . static::getResourceName() . '/';
 	}
 
 	/**
@@ -94,10 +114,68 @@ abstract class Resource {
 	 * @return Salesforce\Resource|null
 	 */
 	public static function find($id) {
-		$resourceName = (new \ReflectionClass(get_called_class()))->getShortName();
-		$metadata = @json_decode(self::$client->get(self::$baseUri . $resourceName . "/{$id}")->getBody());
+		$attributes = @json_decode(static::$client->get(static::getResourceUrl($id))->getBody());
 
-		return new static($metadata);
+		// Returns a new regular instance of the child class using the found object
+		return new static($attributes);
+	}
+
+	/**
+	 * save
+	 * @return void
+	 */
+	public function save() {
+		$data = $this->asArray();
+
+		unset($data['Id']);
+		unset($data['BillingAddress']);
+
+		// Updating or creating?
+		if ($this->Id) {
+			foreach ($data as $key => $value) {
+				if (empty($this->getMetadata()->getField($key)->canUpdate)) {
+					unset($data[$key]);
+				}
+			}
+
+			$response = static::$client->patch(static::getResourceUrl($this->Id), ['body' => json_encode($data)]);
+			return $response && $response->getStatusCode() == 200 ? $this->Id : false;
+		} else {
+			foreach ($data as $key => $value) {
+				if (empty($this->getMetadata()->getField($key)->canCreate)) {
+					unset($data[$key]);
+				}
+			}
+
+			$response = static::$client->post(static::getBaseUrl(), ['body' => json_encode($data)]);
+
+			if (!$response || $response->getStatusCode() != 201) {
+				return false;
+			}
+
+			if (empty($response->getHeaders()['Location'][0])) {
+				throw new Exception('Unexpected response from object creation');
+			}
+
+			$path = $response->getHeaders()['Location'][0];
+			preg_match('#([^\/]*)$#', $path, $matches);
+
+			if (empty($matches[1])) {
+				throw new Exception('Unexpected response path format from object creation');
+			}
+
+			return $this->Id = $matches[1];
+		}
+	}
+
+	/**
+	 * Delete record
+	 * @param  int $id
+	 * @return bool
+	 */
+	public function delete() {
+		$response = @static::$client->delete(static::getResourceUrl($this->Id));
+		return $response && $response->getStatusCode() == 204;
 	}
 
 	/**
@@ -118,11 +196,26 @@ abstract class Resource {
 	 * @return mixed
 	 */
 	public function get($key, $default = null) {
+		static::processKey($key);
+
 		if (array_key_exists($key, $this->attributes)) {
 			return $this->attributes[$key];
 		}
 
 		return $default instanceof Closure ? $default() : $default;
+	}
+
+	public function asArray() {
+		$arr = [];
+
+
+		$allFields = static::getMetadata()->getAllFields();
+
+		foreach ($allFields as $field => $data) {
+			$arr[$data->name] = $this->get($field); // Using get instead of $value in case there will be mutators
+		}
+
+		return $arr;
 	}
 
 	/**
@@ -133,8 +226,14 @@ abstract class Resource {
 	 * @return mixed
 	 */
 	public function set($key, $value) {
+		static::processKey($key);
+
 		$this->attributes[$key] = $value;
 		return $this;
+	}
+
+	public static function processKey(&$key) {
+		return $key = mb_strtolower($key, 'UTF-8');
 	}
 
 	/**
