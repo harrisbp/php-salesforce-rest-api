@@ -120,6 +120,14 @@ class Metadata
     }
 
     /**
+     * Get original describe of the object type
+     * @return array
+     */
+    public function describe() {
+        return $this->source;
+    }
+
+    /**
      * Return the fields array
      * @return array
      */

@@ -75,9 +75,10 @@ class ResourceTest extends BaseTest {
 			}
 
 			$resource = $this->getResourceById($class, $id);
-			$resource->Description = 'Test Value';
+			$resource->Description = 'Test Value ' . rand(1, 999);
 
-			$resource->save();
+			$result = $resource->save();
+			$this->assertInternalType('string', $result);
 		}
 	}
 
@@ -89,9 +90,10 @@ class ResourceTest extends BaseTest {
 			}
 
 			$resource = $this->getResourceById($class, $id);
-			$name = $resource->Id;
+			$id = $resource->Id;
+			$this->assertInternalType('string', $id);
 
-			if ($name) {
+			if ($id) {
 				//echo "\n" . 'Found Id attribute for resource ' . $class . ': ' . $name . "\n";
 			} else {
 				echo "\n\n" . '!! Could not access Id attribute for resource ' . $class . "\n";
@@ -141,7 +143,10 @@ class ResourceTest extends BaseTest {
 				$resource->Description = 'Test Value';
 			}
 
-			if ($id = $resource->save()) {
+			$id = $resource->save();
+			$this->assertInternalType('string', $id);
+
+			if ($id) {
 				$createdIds[$class] = $id;
 			} else {
 				echo "\n" . '!! Could not create new resource ' . $class . "\n";
@@ -160,7 +165,8 @@ class ResourceTest extends BaseTest {
 			// Need full root namespace for dynamic instantiation
 			$class = "\\Salesforce\\Resource\\$class";
 			$resource = $class::find($id);
-			$resource->delete();
+			$result = $resource->delete();
+			$this->assertEquals(true, $result);
 		}
 	}
 }

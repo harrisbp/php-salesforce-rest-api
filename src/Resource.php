@@ -78,6 +78,14 @@ abstract class Resource {
 	}
 
 	/**
+	 * Get original describe of the object type
+	 * @return array
+	 */
+	public function describe() {
+	    return $this->getMetadata()->describe();
+	}
+
+	/**
 	 * Get the metadata for the current class resource
 	 *
 	 * @return Salesforce\Metadata
@@ -139,7 +147,7 @@ abstract class Resource {
 			}
 
 			$response = static::$client->patch(static::getResourceUrl($this->Id), ['body' => json_encode($data)]);
-			return $response && $response->getStatusCode() == 200 ? $this->Id : false;
+			return $response && $response->getStatusCode() == 204 ? $this->Id : false;
 		} else {
 			foreach ($data as $key => $value) {
 				if (empty($this->getMetadata()->getField($key)->canCreate)) {
@@ -186,6 +194,14 @@ abstract class Resource {
 	 */
 	public static function setHttpClient(HttpClient $client) {
 		static::$client = $client;
+	}
+
+	/**
+	 * Returns the httpClient
+	 * @return HttpClient
+	 */
+	public static function getHttpClient() {
+		return static::$client;
 	}
 
 	/**
