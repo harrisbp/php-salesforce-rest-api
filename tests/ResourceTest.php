@@ -9,12 +9,24 @@ class ResourceTest extends BaseTest {
 	public $testOwnerId;
 
 	function __construct() {
+		parent::__construct();
+
 		$this->resources = [
 			'Account' => gethostname() != 'DESKTOP-SABKJE0' ? '00141000005X5FFAA0' : '0014100000AOqVEAA1',
 			'Contact' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '0034100000CkOfE',
 			'Lead' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '00Q4100000EryKa',
 			'Opportunity' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '00641000005AV3c',
 			'Order' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '80141000000Hhfh',
+			'Product2' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '01t41000001RPM3',
+			'Solution' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '50141000000HFx0',
+			/* "Case" is a protected PHP keyword. May need to implelent separate string for class name */
+			//'Case' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '50041000002euZu',
+			'Campaign' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '70141000000R2VF',
+			/* Needs contract status to create new */
+			//'Contract' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '80041000000HJyG',
+			'Asset' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '02i41000000Und6',
+			//'Folder' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '00541000001L9eq',
+			//'Document' => gethostname() != 'DESKTOP-SABKJE0' ? '' : '015410000013pG7',
 		];
 
 		$this->testOwnerId = gethostname() != 'DESKTOP-SABKJE0' ? '' : '00541000001L9eq';
