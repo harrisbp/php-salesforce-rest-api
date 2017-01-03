@@ -124,7 +124,7 @@ class Metadata
      * @return array
      */
     public function describe() {
-        return $this->source;
+        return $this->_source;
     }
 
     /**
