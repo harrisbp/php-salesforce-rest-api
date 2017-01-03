@@ -29,7 +29,7 @@ class Connection {
 
     public function getHttpClient()
     {
-        if(!isset($this->httpClient)) {
+        if(empty($this->httpClient)) {
             $this->initializeHttpClient();
         }
 
