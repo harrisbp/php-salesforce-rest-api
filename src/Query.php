@@ -94,6 +94,9 @@ class Query {
     }
 
     public function execute() {
+        $this->count = 0;
+        $this->records = [];
+
         $query = $this->compiled();
         $url = $this->getQueryUrl($query);
         $result = @json_decode(static::$client->get($url)->getBody());
@@ -105,6 +108,7 @@ class Query {
         if (isset($result->totalSize)) {
             $this->count = $result->totalSize;
         }
+
         if (!empty($result->records)) {
             $this->records = $result->records;
         }
@@ -154,7 +158,8 @@ class Query {
      * @param $string
      * @return string
      */
-    public function escape($string) {
+    public function escape($string)
+    {
         $search = array("\\",  "\x00", "\n",  "\r",  "'",  '"', "\x1a");
         $replace = array("\\\\","\\0","\\n", "\\r", "\\'", '\"', "\\Z");
         return str_replace($search, $replace, $string);
