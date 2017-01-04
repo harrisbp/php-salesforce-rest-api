@@ -53,6 +53,7 @@ class Connection {
 
         Resource::setHttpClient($this->httpClient);
         Query::setHttpClient($this->httpClient);
+        Search::setHttpClient($this->httpClient);
     }
 
 }

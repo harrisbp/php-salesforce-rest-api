@@ -224,11 +224,22 @@ abstract class Resource {
 	public function asArray() {
 		$arr = [];
 
-
 		$allFields = static::getMetadata()->getAllFields();
 
 		foreach ($allFields as $field => $data) {
 			$arr[$data->name] = $this->get($field); // Using get instead of $value in case there will be mutators
+		}
+
+		return $arr;
+	}
+
+	public function fieldList() {
+		$arr = [];
+
+		$allFields = static::getMetadata()->getAllFields();
+
+		foreach ($allFields as $field => $data) {
+			$arr[] = $data->name;
 		}
 
 		return $arr;

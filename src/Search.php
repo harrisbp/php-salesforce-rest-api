@@ -3,7 +3,7 @@ namespace Salesforce;
 
 use GuzzleHttp\Client as HttpClient;
 
-class Query {
+class Search {
     protected static $booted = false;
 
     /**
@@ -18,7 +18,15 @@ class Query {
      *
      * @var string
      */
-    protected $where = '';
+    protected $find = '';
+
+    /**
+     * Holds the search group
+     *
+     * @var string
+     */
+    protected $searchGroup = '';
+
 
     /**
      * @var string
@@ -50,7 +58,7 @@ class Query {
      * Base URI of resource requests
      * @var string
      */
-    protected static $baseUri = "query/";
+    protected static $baseUri = "search/";
 
     /**
      * Set the client instance.
@@ -109,8 +117,9 @@ class Query {
             $this->count = $result->totalSize;
         }
 
-        if (!empty($result->records)) {
-            $this->records = $result->records;
+        if (!empty($result->searchRecords)) {
+            $this->records = $result->searchRecords;
+            $this->count   = count($result->searchRecords);
         }
 
         return $this;
@@ -126,7 +135,15 @@ class Query {
 
     public function compiled() {
         if (!$this->from) {
-            throw new Exception('Nothing specified for From in query');
+            throw new Exception('Nothing specified for From in search query');
+        }
+
+        if (!$this->select) {
+            throw new Exception('Nothing specified for Select in search query');
+        }
+
+        if (!$this->searchGroup) {
+            throw new Exception('Nothing specified for Search Group in search query');
         }
 
         if (empty($this->select)) {
@@ -139,19 +156,13 @@ class Query {
             }
         }
 
-        $query = 'SELECT ' . $this->select . ' FROM ' . $this->escape($this->from);
-
-        if ($this->where) {
-            $query .= ' WHERE ' . $this->where;
-        }
-
-        if ($this->limit) {
-            $query .= ' limit ' . $this->limit;
-        }
+        $query = 'FIND {' . $this->find . '} IN '
+            . $this->searchGroup . ' FIELDS '
+            . 'RETURNING ' . $this->from
+            . '(' . $this->select . ')';
 
         return $query;
     }
-
     /**
      * Mimicks mysql_real_escape_string
      *
@@ -211,7 +222,7 @@ class Query {
     }
 
     public function from($from) {
-        $this->from = $from;
+        $this->from = $this->escape(ucfirst($from));
         return $this;
     }
 
@@ -220,68 +231,74 @@ class Query {
         return $this;
     }
 
-    public function where($key_or_array_or_callable, $value_or_null = null, $operation = '=', $join = 'and') {
-        $and_or = strtolower(trim($join)) == 'and' ? ' AND ' : ' OR ';
+    public function in($searchGroup) {
+        $searchGroup = strtoupper($searchGroup);
+        if (!in_array($searchGroup, ['ALL', 'NAME', 'EMAIL', 'PHONE', 'SIDEBAR'])) {
+            throw new Exception('Search group for find must be one of: ' . implode(', ', $searchGroup));
+        }
 
-        if (is_string($key_or_array_or_callable) || is_numeric($key_or_array_or_callable)) {
-            $key = $key_or_array_or_callable;
+        $this->searchGroup = $this->escape($searchGroup);
+        return $this;
+    }
 
-            if (is_null($value_or_null)) {
-                throw new Exception('No key value specified for where()');
-            }
+    public function find($value_or_array_or_callable, $join = 'and') {
+        switch (strtolower(trim($join))) {
+            case 'and' :
+                $join = ' AND ';
+                break;
 
-            $value = $value_or_null;
+            case 'or' :
+                $join = ' OR ';
+                break;
+
+            case 'andnot' :
+                $join = ' AND NOT ';
+                break;
+        }
+
+        if (is_string($value_or_array_or_callable) || is_numeric($value_or_array_or_callable)) {
+            $value = trim($value_or_array_or_callable);
 
             // Check if there's already a where clause created, unless we're at the start of a group
-            if ($this->where && substr($this->where, -1) !== '(') {
-                $this->where .= $and_or;
+            if ($this->find && substr($this->find, -1) !== '(') {
+                $this->find .= $join;
             }
 
-            if (stripos($operation, 'like') === false) {
-                $operator = $operation;
-            } else {
-                if (stripos($operation, 'not') !== false) {
-                    $this->where .= '(NOT ';
+            $quoted = false;
+            if (strpos($value, '"') === 0) {
+                if (substr($value, -1) !== '"') {
+                    throw new Exception('Mismatched quotes for find() value');
                 }
 
-                $operator = 'LIKE';
+                $quoted = true;
+                $value  = substr($value, 1, strlen($value) - 2);;
             }
 
-            $this->where .= $this->escape($key) . ' ' . $operator . ' ';
+            $this->find .= ($quoted ? '"' : '') . $this->escape($value) . ($quoted ? '"' : '');
 
-            if (is_numeric($value)) {
-                $this->where .= $value;
-            } else {
-                $this->where .= '\'' . $this->escape($value) . '\'';
-            }
+            return $this;
+        }
 
-            if ($operation == 'notlike') {
-                $this->where .= ')';
+        if (is_array($value_or_array_or_callable)) {
+            $find_array = $value_or_array_or_callable;
+
+            foreach ($find_array as $value) {
+                $this->find($value);
             }
 
             return $this;
         }
 
-        if (is_array($key_or_array_or_callable)) {
-            $where_array = $key_or_array_or_callable;
-
-            foreach ($where_array as $key => $value) {
-                $this->where($key, $value);
+        if (is_callable($value_or_array_or_callable)) {
+            if ($this->find) {
+                $this->find .= $join;
             }
 
-            return $this;
-        }
+            $this->find .= '(';
 
-        if (is_callable($key_or_array_or_callable)) {
-            if ($this->where) {
-                $this->where .= $and_or;
-            }
+            $value_or_array_or_callable($this);
 
-            $this->where .= '(';
-
-            $key_or_array_or_callable($this);
-
-            $this->where .= ')';
+            $this->find .= ')';
 
             return $this;
         }
@@ -289,24 +306,13 @@ class Query {
         throw new Exception('Invalid input for where()');
     }
 
-    public function orWhere($key_or_array_or_callable, $value_or_null = null, $operation = '=')
+    public function orFind($value_or_array_or_callable)
     {
-        return $this->where($key_or_array_or_callable, $value_or_null, $operation, 'or');
+        return $this->find($value_or_array_or_callable, 'or');
     }
 
-    public function where_like($key_or_array_or_callable, $value_or_null = null) {
-        return $this->where($key_or_array_or_callable, $value_or_null, 'like');
-    }
-
-    public function orWhereLike($key_or_array_or_callable, $value_or_null = null) {
-        return $this->where($key_or_array_or_callable, $value_or_null, 'like', 'or');
-    }
-
-    public function whereNotLike($key_or_array_or_callable, $value_or_null = null) {
-        return $this->where($key_or_array_or_callable, $value_or_null, 'notlike');
-    }
-
-    public function orWhereNotLike($key_or_array_or_callable, $value_or_null = null) {
-        return $this->where($key_or_array_or_callable, $value_or_null, 'notlike', 'or');
+    public function notFind($value_or_array_or_callable)
+    {
+        return $this->find($value_or_array_or_callable, 'andnot');
     }
 }

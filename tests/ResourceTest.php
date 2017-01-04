@@ -32,6 +32,20 @@ class ResourceTest extends BaseTest {
 		$this->testOwnerId = gethostname() != 'DESKTOP-V7KJORT' ? '' : '00541000001L9eq';
 	}
 
+
+	public function testCanSearchResource() {
+		$this->bootstrap();
+
+		foreach ($this->resources as $class => $id) {
+			// Need full root namespace for dynamic instantiation
+			$search = new \Salesforce\Search;
+
+			$search->select('Id')->from($class)->in('all')->find($id)->execute();
+
+			$this->assertInternalType('array', $search->records());
+		}
+	}
+
 	public function testCanQueryResource() {
 		$this->bootstrap();
 
