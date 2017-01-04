@@ -221,7 +221,7 @@ class Query {
     }
 
     public function where($key_or_array_or_callable, $value_or_null = null, $operation = '=', $join = 'and') {
-        $and_or = $join == 'and' ? ' AND ' : ' OR ';
+        $join = $join == 'and' ? ' AND ' : ' OR ';
 
         if (is_string($key_or_array_or_callable)) {
             $key = $key_or_array_or_callable;
@@ -234,7 +234,7 @@ class Query {
 
             // Check if there's already a where clause created, unless we're at the start of a group
             if ($this->where && substr($this->where, -1) !== '(') {
-                $this->where .= $and_or;
+                $this->where .= $join;
             }
 
             if (stripos($operation, 'like') === false) {
@@ -273,8 +273,8 @@ class Query {
         }
 
         if (is_callable($key_or_array_or_callable)) {
-            if ($this->where) {
-                $this->where .= $and_or;
+            if ($this->where && substr($this->where, -1) !== '(') {
+                $this->where .= $join;
             }
 
             $this->where .= '(';
