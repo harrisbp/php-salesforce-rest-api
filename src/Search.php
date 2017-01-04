@@ -90,7 +90,7 @@ class Search {
             'select' => '',
             'find' => '',
             'searchGroup' => '',
-            'from' => null,
+            'from' => '',
         ];
     }
 
