@@ -317,7 +317,7 @@ class Query {
         return $this->where($key_or_array_or_callable, $value_or_null, $operation, 'or');
     }
 
-    public function where_like($key_or_array_or_callable, $value_or_null = null) {
+    public function whereLike($key_or_array_or_callable, $value_or_null = null) {
         return $this->where($key_or_array_or_callable, $value_or_null, 'like');
     }
 
