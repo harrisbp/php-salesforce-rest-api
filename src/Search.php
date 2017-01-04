@@ -7,6 +7,18 @@ class Search {
     protected static $booted = false;
 
     /**
+     * Holds the components of the query
+     *
+     * @var array
+     */
+    protected $components = [
+        'select' => '',
+        'find' => '',
+        'searchGroup' => '',
+        'from' => null,
+    ];
+
+    /**
      * Holds the columns for a SELECT
      *
      * @var string
@@ -32,11 +44,6 @@ class Search {
      * @var string
      */
     protected $from = '';
-
-    /**
-     * @var int
-     */
-    protected $limit = null;
 
     /**
      * HTTP Client Instance
@@ -76,6 +83,15 @@ class Search {
      */
     public static function getHttpClient() {
         return static::$client;
+    }
+
+    public function resetComponents() {
+        $this->components = [
+            'select' => '',
+            'find' => '',
+            'searchGroup' => '',
+            'from' => null,
+        ];
     }
 
     /**
@@ -122,6 +138,8 @@ class Search {
             $this->count   = count($result->searchRecords);
         }
 
+        $this->resetComponents();
+
         return $this;
     }
 
@@ -134,20 +152,20 @@ class Search {
     }
 
     public function compiled() {
-        if (!$this->from) {
+        if (!$this->components['from']) {
             throw new Exception('Nothing specified for From in search query');
         }
 
-        if (!$this->select) {
+        if (!$this->components['select']) {
             throw new Exception('Nothing specified for Select in search query');
         }
 
-        if (!$this->searchGroup) {
+        if (!$this->components['searchGroup']) {
             throw new Exception('Nothing specified for Search Group in search query');
         }
 
-        if (empty($this->select)) {
-            $fullClass = "\\Salesforce\\Resource\\$this->from";
+        if (empty($this->components['select'])) {
+            $fullClass = "\\Salesforce\\Resource\\$this->components[from]";
             $resource = new $fullClass();
             $metadata = $resource::getMetadata();
             $fields = $metadata->getAllFields();
@@ -156,10 +174,10 @@ class Search {
             }
         }
 
-        $query = 'FIND {' . $this->find . '} IN '
-            . $this->searchGroup . ' FIELDS '
-            . 'RETURNING ' . $this->from
-            . '(' . $this->select . ')';
+        $query = 'FIND {' . $this->components['find'] . '} IN '
+            . $this->components['searchGroup'] . ' FIELDS '
+            . 'RETURNING ' . $this->components['from']
+            . '(' . $this->components['select'] . ')';
 
         return $query;
     }
@@ -188,12 +206,12 @@ class Search {
             // Keep the array empty and we'll get all the fields later via metadata
             // Salesforce query cannot select all fields with *
             if ($args[0] == '*') {
-                $this->select = '';
+                $this->components['select'] = '';
                 return $this;
             }
 
-            if ($this->select) {
-                $this->select .= ', ';
+            if ($this->components['select']) {
+                $this->components['select'] .= ', ';
             }
 
             if (count($args) > 1) {
@@ -202,9 +220,9 @@ class Search {
                     $escaped[] = $this->escape($arg);
                 }
 
-                $this->select .= implode(', ', $escaped);
+                $this->components['select'] .= implode(', ', $escaped);
             } else {
-                $this->select .= $this->escape($args[0]);
+                $this->components['select'] .= $this->escape($args[0]);
             }
 
             return $this;
@@ -222,12 +240,7 @@ class Search {
     }
 
     public function from($from) {
-        $this->from = $this->escape(ucfirst($from));
-        return $this;
-    }
-
-    public function limit($limit) {
-        $this->limit = $limit;
+        $this->components['from'] = $this->escape(ucfirst($from));
         return $this;
     }
 
@@ -237,7 +250,7 @@ class Search {
             throw new Exception('Search group for find must be one of: ' . implode(', ', $searchGroup));
         }
 
-        $this->searchGroup = $this->escape($searchGroup);
+        $this->components['searchGroup'] = $this->escape($searchGroup);
         return $this;
     }
 
@@ -260,8 +273,8 @@ class Search {
             $value = trim($value_or_array_or_callable);
 
             // Check if there's already a where clause created, unless we're at the start of a group
-            if ($this->find && substr($this->find, -1) !== '(') {
-                $this->find .= $join;
+            if ($this->components['find'] && substr($this->components['find'], -1) !== '(') {
+                $this->components['find'] .= $join;
             }
 
             $quoted = false;
@@ -274,7 +287,7 @@ class Search {
                 $value  = substr($value, 1, strlen($value) - 2);;
             }
 
-            $this->find .= ($quoted ? '"' : '') . $this->escape($value) . ($quoted ? '"' : '');
+            $this->components['find'] .= ($quoted ? '"' : '') . $this->escape($value) . ($quoted ? '"' : '');
 
             return $this;
         }
@@ -290,15 +303,15 @@ class Search {
         }
 
         if (is_callable($value_or_array_or_callable)) {
-            if ($this->find) {
-                $this->find .= $join;
+            if ($this->components['find']) {
+                $this->components['find'] .= $join;
             }
 
-            $this->find .= '(';
+            $this->components['find'] .= '(';
 
             $value_or_array_or_callable($this);
 
-            $this->find .= ')';
+            $this->components['find'] .= ')';
 
             return $this;
         }

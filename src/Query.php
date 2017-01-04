@@ -7,6 +7,18 @@ class Query {
     protected static $booted = false;
 
     /**
+     * Holds the components of the query
+     *
+     * @var array
+     */
+    protected $components = [
+        'select' => '',
+        'where' => '',
+        'from' => '',
+        'limit' => null,
+    ];
+
+    /**
      * Holds the columns for a SELECT
      *
      * @var string
@@ -62,6 +74,15 @@ class Query {
         static::$client = $client;
     }
 
+    public function resetComponents() {
+        $this->components = [
+            'select' => '',
+            'where' => '',
+            'from' => '',
+            'limit' => null,
+        ];
+    }
+
     /**
      * Returns the httpClient
      * @return HttpClient
@@ -113,6 +134,8 @@ class Query {
             $this->records = $result->records;
         }
 
+        $this->resetComponents();
+
         return $this;
     }
 
@@ -125,12 +148,12 @@ class Query {
     }
 
     public function compiled() {
-        if (!$this->from) {
+        if (!$this->components['from']) {
             throw new Exception('Nothing specified for From in query');
         }
 
-        if (empty($this->select)) {
-            $fullClass = "\\Salesforce\\Resource\\$this->from";
+        if (empty($this->components['select'])) {
+            $fullClass = "\\Salesforce\\Resource\\$this->components[from]";
             $resource = new $fullClass();
             $metadata = $resource::getMetadata();
             $fields = $metadata->getAllFields();
@@ -139,14 +162,14 @@ class Query {
             }
         }
 
-        $query = 'SELECT ' . $this->select . ' FROM ' . $this->escape($this->from);
+        $query = 'SELECT ' . $this->components['select'] . ' FROM ' . $this->escape($this->components['from']);
 
-        if ($this->where) {
-            $query .= ' WHERE ' . $this->where;
+        if ($this->components['where']) {
+            $query .= ' WHERE ' . $this->components['where'];
         }
 
-        if ($this->limit) {
-            $query .= ' limit ' . $this->limit;
+        if ($this->components['limit']) {
+            $query .= ' limit ' . $this->components['limit'];
         }
 
         return $query;
@@ -177,12 +200,12 @@ class Query {
             // Keep the array empty and we'll get all the fields later via metadata
             // Salesforce query cannot select all fields with *
             if ($args[0] == '*') {
-                $this->select = '';
+                $this->components['select'] = '';
                 return $this;
             }
 
-            if ($this->select) {
-                $this->select .= ', ';
+            if ($this->components['select']) {
+                $this->components['select'] .= ', ';
             }
 
             if (count($args) > 1) {
@@ -191,9 +214,9 @@ class Query {
                     $escaped[] = $this->escape($arg);
                 }
 
-                $this->select .= implode(', ', $escaped);
+                $this->components['select'] .= implode(', ', $escaped);
             } else {
-                $this->select .= $this->escape($args[0]);
+                $this->components['select'] .= $this->escape($args[0]);
             }
 
             return $this;
@@ -211,12 +234,12 @@ class Query {
     }
 
     public function from($from) {
-        $this->from = $from;
+        $this->components['from'] = $from;
         return $this;
     }
 
     public function limit($limit) {
-        $this->limit = $limit;
+        $this->components['limit'] = (int)$limit;
         return $this;
     }
 
@@ -233,30 +256,30 @@ class Query {
             $value = $value_or_null;
 
             // Check if there's already a where clause created, unless we're at the start of a group
-            if ($this->where && substr($this->where, -1) !== '(') {
-                $this->where .= $and_or;
+            if ($this->components['where'] && substr($this->components['where'], -1) !== '(') {
+                $this->components['where'] .= $and_or;
             }
 
             if (stripos($operation, 'like') === false) {
                 $operator = $operation;
             } else {
                 if (stripos($operation, 'not') !== false) {
-                    $this->where .= '(NOT ';
+                    $this->components['where'] .= '(NOT ';
                 }
 
                 $operator = 'LIKE';
             }
 
-            $this->where .= $this->escape($key) . ' ' . $operator . ' ';
+            $this->components['where'] .= $this->escape($key) . ' ' . $operator . ' ';
 
             if (is_numeric($value)) {
-                $this->where .= $value;
+                $this->components['where'] .= $value;
             } else {
-                $this->where .= '\'' . $this->escape($value) . '\'';
+                $this->components['where'] .= '\'' . $this->escape($value) . '\'';
             }
 
             if ($operation == 'notlike') {
-                $this->where .= ')';
+                $this->components['where'] .= ')';
             }
 
             return $this;
@@ -273,15 +296,15 @@ class Query {
         }
 
         if (is_callable($key_or_array_or_callable)) {
-            if ($this->where) {
-                $this->where .= $and_or;
+            if ($this->components['where']) {
+                $this->components['where'] .= $and_or;
             }
 
-            $this->where .= '(';
+            $this->components['where'] .= '(';
 
             $key_or_array_or_callable($this);
 
-            $this->where .= ')';
+            $this->components['where'] .= ')';
 
             return $this;
         }
