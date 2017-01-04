@@ -289,7 +289,7 @@ class Query {
             $where_array = $key_or_array_or_callable;
 
             foreach ($where_array as $key => $value) {
-                $this->where($key, $value);
+                $this->where($key, $value, $operation, $join);
             }
 
             return $this;

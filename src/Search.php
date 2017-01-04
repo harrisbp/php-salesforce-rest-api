@@ -90,7 +90,7 @@ class Search {
             'select' => '',
             'find' => '',
             'searchGroup' => '',
-            'from' => '',
+            'from' => null,
         ];
     }
 
@@ -257,15 +257,19 @@ class Search {
     public function find($value_or_array_or_callable, $join = 'and') {
         switch (strtolower(trim($join))) {
             case 'and' :
-                $join = ' AND ';
+                $and_or = ' AND ';
                 break;
 
             case 'or' :
-                $join = ' OR ';
+                $and_or = ' OR ';
                 break;
 
             case 'andnot' :
-                $join = ' AND NOT ';
+                $and_or = ' AND NOT ';
+                break;
+
+            default :
+                throw new Exception('Invalid value for Search $join');
                 break;
         }
 
@@ -274,7 +278,7 @@ class Search {
 
             // Check if there's already a where clause created, unless we're at the start of a group
             if ($this->components['find'] && substr($this->components['find'], -1) !== '(') {
-                $this->components['find'] .= $join;
+                $this->components['find'] .= $and_or;
             }
 
             $quoted = false;
@@ -296,7 +300,7 @@ class Search {
             $find_array = $value_or_array_or_callable;
 
             foreach ($find_array as $value) {
-                $this->find($value);
+                $this->find($value, $join);
             }
 
             return $this;
@@ -304,7 +308,7 @@ class Search {
 
         if (is_callable($value_or_array_or_callable)) {
             if ($this->components['find']) {
-                $this->components['find'] .= $join;
+                $this->components['find'] .= $and_or;
             }
 
             $this->components['find'] .= '(';
