@@ -32,6 +32,19 @@ class ResourceTest extends BaseTest {
 		$this->testOwnerId = gethostname() != 'DESKTOP-V7KJORT' ? '' : '00541000001L9eq';
 	}
 
+	public function testCanQueryResource() {
+		$this->bootstrap();
+
+		foreach ($this->resources as $class => $id) {
+			// Need full root namespace for dynamic instantiation
+			$query = new \Salesforce\Query;
+
+			$query->select('Id')->from($class)->where('Id', $id)->execute();
+
+			$this->assertInternalType('array', $query->records());
+		}
+	}
+
 	public function testCanDescribeResource() {
 		$this->bootstrap();
 
@@ -147,10 +160,11 @@ class ResourceTest extends BaseTest {
 			// Need full root namespace for dynamic instantiation
 			$fullClass = "\\Salesforce\\Resource\\$class";
 			$resource = new $fullClass();
+			$metadata = $resource::getMetadata();
 
-			foreach ($resource::getMetadata()->getAllFields() as $field) {
-				if ($field->required && $field->canCreate && $field->type != $resource->getMetadata()::REFERENCE_TYPE) {
-					$resource->{$field->name} = $resource->getMetadata()->getSampleValue($field);
+			foreach ($metadata->getAllFields() as $field) {
+				if ($field->required && $field->canCreate && $field->type != $metadata::REFERENCE_TYPE) {
+					$resource->{$field->name} = $metadata->getSampleValue($field);
 				}
 
 				if ($field->name == 'AccountId') {
@@ -162,7 +176,7 @@ class ResourceTest extends BaseTest {
 
 			// Most or all resources have a description field
 			// Go ahead and populate it in case there are no required fields
-			if ($resource::getMetadata()->hasField('Description')) {
+			if ($metadata->hasField('Description')) {
 				$resource->Description = 'Test Value';
 			}
 

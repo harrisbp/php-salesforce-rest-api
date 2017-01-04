@@ -62,8 +62,8 @@ abstract class Resource {
 	 */
 	protected function bootIfNotBooted() {
 		if (!isset(static::$booted[static::class])) {
-			static::$booted[static::class] = true;
 			static::boot();
+			static::$booted[static::class] = true;
 		}
 	}
 
@@ -71,7 +71,7 @@ abstract class Resource {
 		$metadata = @json_decode(static::$client->get(static::getBaseUrl() . "describe")->getBody());
 
 		if (!$metadata) {
-			throw new Exception('Unable to decode metadata for resource: ' . $resourceName);
+			throw new Exception('Unable to decode metadata for resource: ' . static::getResourceName());
 		}
 
 		static::$metadata[static::class] = new Metadata($metadata);
@@ -88,7 +88,7 @@ abstract class Resource {
 	/**
 	 * Get the metadata for the current class resource
 	 *
-	 * @return Salesforce\Metadata
+	 * @return \Salesforce\Metadata
 	 */
 	public static function getMetadata() {
 		return static::$metadata[static::class];
@@ -119,7 +119,7 @@ abstract class Resource {
 	 * Lookup a specific resource
 	 *
 	 * @param  string $id
-	 * @return Salesforce\Resource|null
+	 * @return \Salesforce\Resource|null
 	 */
 	public static function find($id) {
 		$attributes = @json_decode(static::$client->get(static::getResourceUrl($id))->getBody());
@@ -218,7 +218,7 @@ abstract class Resource {
 			return $this->attributes[$key];
 		}
 
-		return $default instanceof Closure ? $default() : $default;
+		return is_callable($default) ? $default() : $default;
 	}
 
 	public function asArray() {
