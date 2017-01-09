@@ -153,7 +153,7 @@ class Query {
         }
 
         if (empty($this->components['select'])) {
-            $fullClass = "\\Salesforce\\Resource\\$this->components[from]";
+            $fullClass = "\\Salesforce\\Resource\\{$this->components['from']}";
             $resource = new $fullClass();
             $metadata = $resource::getMetadata();
             $fields = $metadata->getAllFields();
@@ -274,6 +274,8 @@ class Query {
 
             if (is_numeric($value)) {
                 $this->components['where'] .= $value;
+            } else if (is_bool($value)) {
+                $this->components['where'] .= $value ? 'true' : 'false';
             } else {
                 $this->components['where'] .= '\'' . $this->escape($value) . '\'';
             }

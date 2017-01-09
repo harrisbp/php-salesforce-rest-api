@@ -165,7 +165,7 @@ class Search {
         }
 
         if (empty($this->components['select'])) {
-            $fullClass = "\\Salesforce\\Resource\\$this->components[from]";
+            $fullClass = "\\Salesforce\\Resource\\{$this->components['from']}";
             $resource = new $fullClass();
             $metadata = $resource::getMetadata();
             $fields = $metadata->getAllFields();
