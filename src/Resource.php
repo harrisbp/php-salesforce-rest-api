@@ -82,7 +82,7 @@ abstract class Resource {
 	 * @return array
 	 */
 	public function describe() {
-	    return $this->getMetadata()->describe();
+		return $this->getMetadata()->describe();
 	}
 
 	/**
@@ -130,7 +130,7 @@ abstract class Resource {
 
 	/**
 	 * save
-	 * @return void
+	 * @return string | false
 	 */
 	public function save() {
 		$data = $this->asArray();
@@ -227,7 +227,9 @@ abstract class Resource {
 		$allFields = static::getMetadata()->getAllFields();
 
 		foreach ($allFields as $field => $data) {
-			$arr[$data->name] = $this->get($field); // Using get instead of $value in case there will be mutators
+			if (!is_null($this->get($field))) {
+				$arr[$data->name] = $this->get($field); // Using get instead of $value in case there will be mutators
+			}
 		}
 
 		return $arr;
