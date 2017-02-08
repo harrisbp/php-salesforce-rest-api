@@ -50,20 +50,6 @@ class ResourceTest extends BaseTest {
 		}
 	}
 
-	/*
-	public function testCanSearchResource() {
-		$this->bootstrap();
-
-		foreach ($this->resources as $class => $id) {
-			// Need full root namespace for dynamic instantiation
-			$search = new \Salesforce\Search;
-
-			$search->select('Id')->from($class)->in('all')->find($id)->execute();
-
-			$this->assertInternalType('array', $search->records());
-		}
-	}
-
 	public function testCanSearchResourceCache() {
 		$this->bootstrap();
 
@@ -278,12 +264,10 @@ class ResourceTest extends BaseTest {
 
 		return $createdIds;
 	}
-	*/
 
 	/**
 	 * @depends testCanCreateResource
 	 */
-	/*
 	public function testCanDeleteResource($createdIds) {
 		// Attempt to delete the accounts that were created in the create test
 		foreach ($createdIds as $class => $id) {
@@ -294,5 +278,4 @@ class ResourceTest extends BaseTest {
 			$this->assertEquals(true, $result);
 		}
 	}
-	*/
 }
