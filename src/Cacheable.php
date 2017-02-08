@@ -42,11 +42,13 @@ trait Cacheable {
 			$url    = $this->getQueryUrl($query);
 			$result = @json_decode(static::$client->get($url)->getBody());
 
-			self::cachePutById(
-				$type,
-				$searchHash,
-				json_encode($result)
-			);
+			if (!empty($result->totalSize)) {
+				self::cachePutById(
+					$type,
+					$searchHash,
+					json_encode($result)
+				);
+			}
 
 			return @json_decode($result);
 		}
@@ -71,11 +73,13 @@ trait Cacheable {
 			$url = $this->getQueryUrl($query);
 			$result = @json_decode(static::$client->get($url)->getBody());
 
-			self::cachePutById(
-				$type,
-				$searchHash,
-				json_encode($result)
-			);
+			if (!empty($result->totalSize)) {
+				self::cachePutById(
+					$type,
+					$searchHash,
+					json_encode($result)
+				);
+			}
 
 			return $result;
 		}
