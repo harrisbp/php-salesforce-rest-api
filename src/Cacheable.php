@@ -50,7 +50,7 @@ trait Cacheable {
 				);
 			}
 
-			return @json_decode($result);
+			return $result;
 		}
 
 		return @json_decode($result[0]['data']);
