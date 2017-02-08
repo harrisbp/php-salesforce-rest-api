@@ -1,11 +1,16 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Hostname (need to set OS hosts file to use this)
 hostname = "salesforce-api.dev"
+
 # The server folder that will contain the root of the files
 synced_folder = "/var/www/#{hostname}"
+
 # The server folder that will be the document root (e.g. /var/www/#{hostname}/public)
 public_folder = "/var/www/#{hostname}"
+
+# VM can also be accessed via the IP address
 server_ip = "192.168.33.94"
 
 mysql_root_password   = "root"    # We'll assume user "root"
@@ -23,10 +28,10 @@ vm_box = "bento/ubuntu-16.04" # Ubuntu 16.04, PHP 7.0/5.6, MySQL 5.6
 # vm_box = "ubuntu/trusty64"  # Ubuntu 14.04, PHP 5.5, MySQL 5.5
 # vm_box = "ubuntu/precise64" # Ubuntu 12.04, PHP 5.3, MySQL 5.5
 
-# Config Github Settings
+# This is the base URL for downloading helper scripts
 github_url = "https://raw.githubusercontent.com/groovenectar/vagrant-scripts/master"
 
-# Helpful information regarding the hostname and using email
+# Helpful reference information regarding the hostname and IP
 if ARGV[0] == 'up'
 	print "\n\n\n\n>>> Using hostname \"" + hostname + "\" and IP " + server_ip
 	print "\n\n>>> Edit Vagrantfile to update hostname and IP\n\n\n\n"
