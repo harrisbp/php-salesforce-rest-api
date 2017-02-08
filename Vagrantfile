@@ -96,7 +96,7 @@ Vagrant.configure("2") do |config|
 	config.vm.provision "shell", path: "#{github_url}/scripts/ngrok.sh", args: [github_url]
 
 	# PHPUnit
-	config.vm.provision "shell", path: "#{github_url}/scripts/phpunit.sh", args: [github_url]
+	config.vm.provision "shell", path: "#{github_url}/scripts/phpunit-5.sh", args: [github_url]
 
 	# Mailhog mail catching
 	config.vm.provision "shell", path: "#{github_url}/scripts/mailhog.sh", args: [github_url, hostname, server_ip]
