@@ -4,6 +4,8 @@ namespace Salesforce;
 use GuzzleHttp\Client as HttpClient;
 
 class Query {
+    use Cacheable;
+
     protected static $booted = false;
 
     /**
@@ -118,9 +120,13 @@ class Query {
         $this->count = 0;
         $this->records = [];
 
-        $query = $this->compiled();
-        $url = $this->getQueryUrl($query);
-        $result = @json_decode(static::$client->get($url)->getBody());
+        if (self::$useCache) {
+            $result = self::cacheGetByQuery($this->components);
+        } else {
+            $query = $this->compiled();
+            $url = $this->getQueryUrl($query);
+            $result = @json_decode(static::$client->get($url)->getBody());
+        }
 
         if (!$result) {
             throw new Exception('Could not load results');

@@ -42,6 +42,16 @@ abstract class BaseTest extends \PHPUnit_Framework_TestCase
      */
     protected function getConnection()
     {
+        /*
+        var_dump(
+            getenv('SALESFORCE_CLIENT_ID'),
+            getenv('SALESFORCE_CLIENT_SECRET'),
+            getenv('SALESFORCE_USERNAME'),
+            getenv('SALESFORCE_PASSWORD'),
+            getenv('SALESFORCE_TOKEN'));
+        exit();
+        */
+
         if(!isset($this->connection)) 
         {
             $this->connection = new Connection(

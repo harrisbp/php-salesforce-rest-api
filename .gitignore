@@ -1,2 +1,5 @@
 /vendor/
 /tests/.env
+/.idea
+/.vagrant
+/phpmyadmin

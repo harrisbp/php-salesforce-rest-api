@@ -4,6 +4,8 @@ namespace Salesforce;
 use GuzzleHttp\Client as HttpClient;
 
 abstract class Resource {
+	use Cacheable;
+
 	protected static $booted = [];
 
 	/**
@@ -98,6 +100,10 @@ abstract class Resource {
 		return (new \ReflectionClass(get_called_class()))->getShortName();
 	}
 
+	protected static function getResourceNameStatically() {
+		return (new \ReflectionClass(get_called_class()))->getShortName();
+	}
+
 	/**
 	 * getResourceUrl
 	 * @param  int $id
@@ -115,14 +121,20 @@ abstract class Resource {
 		return static::$baseUri . static::getResourceName() . '/';
 	}
 
+
 	/**
 	 * Lookup a specific resource
 	 *
 	 * @param  string $id
+	 * @param  bool $forceBypassCache
 	 * @return \Salesforce\Resource|null
 	 */
-	public static function find($id) {
-		$attributes = @json_decode(static::$client->get(static::getResourceUrl($id))->getBody());
+	public static function find($id, $forceBypassCache = false) {
+		if (self::$useCache && !$forceBypassCache) {
+			$attributes = self::cacheGetById(self::getResourceNameStatically(), $id);
+		} else {
+			$attributes = @json_decode(static::$client->get(static::getResourceUrl($id))->getBody());
+		}
 
 		// Returns a new regular instance of the child class using the found object
 		return new static($attributes);
