@@ -12,4 +12,4 @@ CREATE TABLE IF NOT EXISTS `salesforce_cache` (
 	KEY `type` (`type`),
 	KEY `sfid` (`sfid`),
 	FULLTEXT KEY `data` (`data`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
