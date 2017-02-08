@@ -40,7 +40,7 @@ trait Cacheable {
 		if (!$result) {
 			$query  = $this->compiled();
 			$url    = $this->getQueryUrl($query);
-			$result = static::$client->get($url)->getBody();
+			$result = @json_decode(static::$client->get($url)->getBody());
 
 			self::cachePutById(
 				$type,
@@ -69,7 +69,7 @@ trait Cacheable {
 		if (!$result) {
 			$query = $this->compiled();
 			$url = $this->getQueryUrl($query);
-			$result = static::$client->get($url)->getBody();
+			$result = @json_decode(static::$client->get($url)->getBody());
 
 			self::cachePutById(
 				$type,
@@ -77,7 +77,7 @@ trait Cacheable {
 				json_encode($result)
 			);
 
-			return @json_decode($result);
+			return $result;
 		}
 
 		return @json_decode($result[0]['data']);

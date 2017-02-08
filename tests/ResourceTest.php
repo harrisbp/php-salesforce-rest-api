@@ -45,7 +45,6 @@ class ResourceTest extends BaseTest {
 			$query::cacheInit('localhost', 'root', 'root', 'salesforce');
 
 			$query->select('Id')->from($class)->where('Id', $id)->execute();
-
 			$this->assertInternalType('array', $query->records());
 		}
 	}
@@ -53,20 +52,15 @@ class ResourceTest extends BaseTest {
 	public function testCanSearchResourceCache() {
 		$this->bootstrap();
 
-		foreach ($this->resources as $class => $id) {
-			// Need full root namespace for dynamic instantiation
-			$search = new \Salesforce\Search;
-			$search::cacheInit('localhost', 'root', 'root', 'salesforce');
+		$search = new \Salesforce\Search;
+		$search::cacheInit('localhost', 'root', 'root', 'salesforce');
 
-			$search->select('Id')->from($class)->in('all')->find($id)->execute();
+		$search->select('Name')->from('Contact')->in('all')->find('5555555555')->execute();
 
-			$this->assertInternalType('array', $search->records());
-		}
+		$this->assertInternalType('array', $search->records());
 	}
 
 	public function testCanFindByIdCache() {
-		var_dump(gethostname());
-
 		foreach ($this->resources as $class => $id) {
 			if (!$id) {
 				echo "\n" . 'No ' . $class . ' ID specified for this connection. Skipping find by ID test.';
