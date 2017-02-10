@@ -27,10 +27,10 @@ class Connection {
         $this->version = $version;
     }
 
-    public function getHttpClient($handler = null)
+    public function getHttpClient($paramsAdd = null)
     {
         if(empty($this->httpClient)) {
-            $this->initializeHttpClient($handler);
+            $this->initializeHttpClient($paramsAdd);
         }
 
         return $this->httpClient;
@@ -40,7 +40,7 @@ class Connection {
      * Initialize the HTTP client
      * @return GuzzleHttp\Client
      */
-    protected function initializeHttpClient($handler = null)
+    protected function initializeHttpClient($paramsAdd = null)
     {
         $params = [
             'base_uri' => "{$this->authentication->getInstanceUrl()}/services/data/{$this->version}/",
@@ -51,8 +51,8 @@ class Connection {
             ]
         ];
 
-        if ($handler) {
-            $params['handler'] = $handler;
+        if ($paramsAdd) {
+            $params = array_merge($params, $paramsAdd);
         }
 
         $this->httpClient = new HttpClient($params);
