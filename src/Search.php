@@ -149,6 +149,10 @@ class Search {
         return $this;
     }
 
+    public function components() {
+        return $this->components();
+    }
+
     public function records() {
         return $this->records;
     }

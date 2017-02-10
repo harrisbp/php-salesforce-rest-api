@@ -85,6 +85,10 @@ class Query {
         ];
     }
 
+    public function components() {
+        return $this->components();
+    }
+
     /**
      * Returns the httpClient
      * @return HttpClient

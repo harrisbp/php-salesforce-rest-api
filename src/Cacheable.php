@@ -6,13 +6,27 @@ trait Cacheable {
 	protected static $useCache = false;
 	protected static $table = 'salesforce_cache';
 
-	public static function cacheInit($host, $user, $pass, $db) {
+	public static function createPdoObject($host, $user, $pass, $db) {
 		$dsn = "mysql:host=$host;dbname=$db;charset=utf8";
 		self::$pdo = new \PDO($dsn, $user, $pass);
 		self::$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
 		if (self::$pdo) {
 			self::$useCache = true;
 		}
+
+		return self::$pdo;
+	}
+
+	public static function cacheInit($pdo_or_host, $user = null, $pass = null, $db = null) {
+		if (!self::$pdo) {
+			if (empty($user)) {
+				self::$pdo = $pdo_or_host;
+				self::$useCache = true;
+			} else {
+				self::createPdoObject($pdo_or_host, $user, $pass, $db);
+			}
+		};
 	}
 
 	public static function cachePdoConnection() {
