@@ -19,14 +19,18 @@ trait Cacheable {
 	}
 
 	public static function cacheInit($pdo_or_host, $user = null, $pass = null, $db = null) {
-		if (!self::$pdo) {
+		$o = new static;
+
+		if (!$o::$pdo) {
 			if (empty($user)) {
-				self::$pdo = $pdo_or_host;
-				self::$useCache = true;
+				$o::$pdo = $pdo_or_host;
+				$o::$useCache = true;
 			} else {
-				self::createPdoObject($pdo_or_host, $user, $pass, $db);
+				$o::createPdoObject($pdo_or_host, $user, $pass, $db);
 			}
 		};
+
+		return $o;
 	}
 
 	public static function cachePdoConnection() {
