@@ -27,10 +27,10 @@ class Connection {
         $this->version = $version;
     }
 
-    public function getHttpClient()
+    public function getHttpClient($handler = null)
     {
         if(empty($this->httpClient)) {
-            $this->initializeHttpClient();
+            $this->initializeHttpClient($handler);
         }
 
         return $this->httpClient;
@@ -40,16 +40,22 @@ class Connection {
      * Initialize the HTTP client
      * @return GuzzleHttp\Client
      */
-    protected function initializeHttpClient() 
+    protected function initializeHttpClient($handler = null)
     {
-        $this->httpClient = new HttpClient([
+        $params = [
             'base_uri' => "{$this->authentication->getInstanceUrl()}/services/data/{$this->version}/",
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->authentication->getAccessToken(),
                 'Content-type' => 'application/json',
                 'Accept' => 'application/json',
             ]
-        ]);
+        ];
+
+        if ($handler) {
+            $params['handler'] = $handler;
+        }
+
+        $this->httpClient = new HttpClient($params);
 
         Resource::setHttpClient($this->httpClient);
         Query::setHttpClient($this->httpClient);
