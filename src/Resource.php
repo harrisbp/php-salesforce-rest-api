@@ -130,6 +130,9 @@ abstract class Resource {
 		return static::$baseUri . static::getResourceName() . '/';
 	}
 
+	public static function getBaseUrlStatically() {
+		return static::$baseUri . static::getResourceNameStatically() . '/';
+	}
 
 	/**
 	 * Lookup a specific resource

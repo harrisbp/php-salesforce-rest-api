@@ -36,6 +36,21 @@ class ResourceTest extends BaseTest {
 		$this->testOwnerId = gethostname() != 'salesforce-api' ? '' : '00541000001L9eq';
 	}
 
+	public function testCanDescribeResourceCache() {
+		$this->bootstrap();
+		// Need to transition caching to this pattern -- else describes probably can't be cached
+		$pdo = \Salesforce\Query::createPdoObject('localhost', 'root', 'root', 'salesforce');
+
+		foreach ($this->resources as $class => $id) {
+			// Need full root namespace for dynamic instantiation
+			$class = "\\Salesforce\\Resource\\$class";
+			$resource = new $class([], $pdo);
+
+			$this->assertInternalType('object', $resource->describe());
+		}
+	}
+
+
 	public function testCanQueryResourceCache() {
 		$this->bootstrap();
 

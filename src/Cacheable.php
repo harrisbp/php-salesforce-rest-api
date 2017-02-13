@@ -118,9 +118,9 @@ trait Cacheable {
 		$result = self::cacheGet($sql, $bind);
 
 		if (!$result) {
-			$result = @json_decode(static::$client->get(static::getBaseUrl() . "describe")->getBody());
+			$result = @json_decode(static::$client->get(static::getBaseUrlStatically() . "describe")->getBody());
 
-			if (!empty($result->totalSize)) {
+			if (!empty($result->name)) {
 				self::cachePutById(
 					$type,
 					$sfid,
