@@ -47,7 +47,12 @@ abstract class Resource {
 	 * @param  array|object    $attributes
 	 * @return void
 	 */
-	public function __construct($attributes = []) {
+	public function __construct($attributes = [], $pdo = null) {
+		if (!is_null($pdo)) {
+			self::$pdo = $pdo;
+			self::$useCache = true;
+		}
+
 		$this->bootIfNotBooted();
 
 		foreach ($attributes as $key => $value) {
@@ -70,7 +75,11 @@ abstract class Resource {
 	}
 
 	protected static function boot() {
-		$metadata = @json_decode(static::$client->get(static::getBaseUrl() . "describe")->getBody());
+		if (self::$useCache) {
+			$metadata = self::cacheGetMetadata(self::getResourceNameStatically());
+		} else {
+			$metadata = @json_decode(static::$client->get(static::getBaseUrl() . "describe")->getBody());
+		}
 
 		if (!$metadata) {
 			throw new Exception('Unable to decode metadata for resource: ' . static::getResourceName());

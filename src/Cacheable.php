@@ -105,6 +105,35 @@ trait Cacheable {
 		return @json_decode($result[0]['data']);
 	}
 
+	public static function cacheGetMetadata($resourceName) {
+		$type = $resourceName;
+		$sfid = 'Describe';
+
+		$sql = 'SELECT `data` FROM `' . self::$table . '` WHERE `type` = :type AND `sfid` = :sfid';
+		$bind = [
+			'type' => $type,
+			'sfid' => $sfid
+		];
+
+		$result = self::cacheGet($sql, $bind);
+
+		if (!$result) {
+			$result = @json_decode(static::$client->get(static::getBaseUrl() . "describe")->getBody());
+
+			if (!empty($result->totalSize)) {
+				self::cachePutById(
+					$type,
+					$sfid,
+					json_encode($result)
+				);
+			}
+
+			return $result;
+		}
+
+		return @json_decode($result[0]['data']);
+	}
+
 	public static function cacheGetById($type, $sfid) {
 		$sql = 'SELECT `data` FROM `' . self::$table . '` WHERE `type` = :type AND `sfid` = :sfid';
 		$bind = ['type' => $type, 'sfid' => $sfid];
