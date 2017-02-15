@@ -124,7 +124,7 @@ class Query {
         $this->count = 0;
         $this->records = [];
 
-        if (self::$useCache) {
+        if ($this->components['select'] != 'COUNT()' && self::$useCache) {
             $result = self::cacheGetByQuery($this->components);
         } else {
             $query = $this->compiled();
