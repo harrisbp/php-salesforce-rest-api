@@ -18,6 +18,7 @@ class Search {
         'find' => '',
         'searchGroup' => '',
         'from' => null,
+        'limit' => null,
     ];
 
     /**
@@ -46,6 +47,11 @@ class Search {
      * @var string
      */
     protected $from = '';
+
+    /**
+     * @var int
+     */
+    protected $limit = null;
 
     /**
      * HTTP Client Instance
@@ -93,6 +99,7 @@ class Search {
             'find' => '',
             'searchGroup' => '',
             'from' => null,
+            'limit' => null,
         ];
     }
 
@@ -189,6 +196,10 @@ class Search {
             . 'RETURNING ' . $this->components['from']
             . '(' . $this->components['select'] . ')';
 
+        if ($this->components['limit']) {
+            $query .= ' LIMIT ' . $this->components['limit'];
+        }
+
         return $query;
     }
     /**
@@ -251,6 +262,11 @@ class Search {
 
     public function from($from) {
         $this->components['from'] = $this->escape(ucfirst($from));
+        return $this;
+    }
+
+    public function limit($limit) {
+        $this->components['limit'] = (int)$limit;
         return $this;
     }
 
