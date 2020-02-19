@@ -200,7 +200,7 @@ class Search {
     public function escape($string)
     {
         $search = array("\\",  "\x00", "\n",  "\r",  "'",  '"', "\x1a");
-        $replace = array("\\\\","\\0","\\n", "\\r", "\\'", '\"', "\\Z");
+        $replace = array("\\","\\0","\\n", "\\r", "\\'", '\"', "\\Z");
         return str_replace($search, $replace, $string);
     }
 
@@ -285,6 +285,7 @@ class Search {
 
         if (is_string($value_or_array_or_callable) || is_numeric($value_or_array_or_callable)) {
             $value = trim($value_or_array_or_callable);
+            $value = $this->escapeReservedCharacters($value);
 
             // Check if there's already a where clause created, unless we're at the start of a group
             if ($this->components['find'] && substr($this->components['find'], -1) !== '(') {
@@ -341,5 +342,18 @@ class Search {
     public function notFind($value_or_array_or_callable)
     {
         return $this->find($value_or_array_or_callable, 'andnot');
+    }
+
+    /*
+    * Escape with a backslash reserved characters
+    * https://resources.docs.salesforce.com/sfdc/pdf/salesforce_soql_sosl.pdf
+    */
+    private function escapeReservedCharacters($q)
+    {
+        $search = ["?",   "&",  "|",  "!",  "{",  "}",  "[",  "]",  "(",  ")",  "^",  "~",  "*",  ":", "\\",  '"',  "'",  "+",  "-"];
+        $replace = ["\?", "\&", "\|", "\!", "\{", "\}", "\[", "\]", "\(", "\)", "\^", "\~", "\*", "\:", "\\", '\"', "\'", "\+", "\-"];
+        $q = str_replace($search, $replace, $q);
+
+        return $q;
     }
 }
